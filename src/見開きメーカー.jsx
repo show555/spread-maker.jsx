@@ -1,7 +1,7 @@
 /*===================================================================================================
   File Name: 見開きメーカー.jsx
   Title: 見開きメーカー
-  Version: 1.0.0
+  Version: 1.1.0
   Author: show555
   Description: 複数ページのPDFから指定したページの見開き画像を生成する
   Includes: Underscore.js,
@@ -238,6 +238,11 @@ uDlg.show();
 if ( do_flag ) {
 	// alert( 'フォルダ:' + uDlg.filePnl.path.text + "\n" + 'ページ幅：' + settings.pageWidth + "\n" + 'モード：' + settings.colorMode + "\n" + '保存形式：' + settings.saveType + "\n" + '画質：' + settings.quality );
 
+	var pageLength = settings.spreads.length;
+	// 進捗バーを表示
+	var ProgressPanel = CreateProgressPanel( pageLength + 1, 500, '処理中…', true );
+	ProgressPanel.show();
+
 	var pdfOpenOptions = new PDFOpenOptions();
 	pdfOpenOptions.antiAlias        = true;
 	pdfOpenOptions.mode             = OpenDocumentMode[settings.colorMode];
@@ -253,7 +258,13 @@ if ( do_flag ) {
 		var theBaseDoc,
 		    j = 1;
 
+		// 進捗バーを更新
+		ProgressPanel.val( i );
+
 		_.each( spread, function( page ) {
+			// キャンセルの場合処理中止
+			if ( !do_flag ) return;
+
 			pdfOpenOptions.page = page + settings.offsetPage;
 			// PDFファイルをオープン
 			if ( j === 1 ) {
@@ -271,6 +282,9 @@ if ( do_flag ) {
 			j++;
 		} );
 
+		// キャンセルの場合処理中止
+		if ( !do_flag ) return;
+
 		// 画像を統合
 		theBaseDoc.flatten();
 		// 保存先フォルダを作成
@@ -286,6 +300,9 @@ if ( do_flag ) {
 		theBaseDoc.close( SaveOptions.DONOTSAVECHANGES );
 		i++;
 	} );
+}
+if ( ProgressPanel ) {
+	ProgressPanel.close();
 }
 
 // Photoshopの設定単位を復元
@@ -352,4 +369,37 @@ function getPageWidth() {
 	var pageWidth = page.width.value;
 	page.close( SaveOptions.DONOTSAVECHANGES );
 	return pageWidth;
+}
+
+function CreateProgressPanel( myMaximumValue, myProgressBarWidth , progresTitle, useCancel ) {
+	var progresTitle = typeof progresTitle == 'string' ? progresTitle : 'Processing...';
+	myProgressPanel = new Window( 'palette', _.sprintf( "%s(%d/%d)", progresTitle, 1, myMaximumValue ) );
+	myProgressPanel.myProgressBar = myProgressPanel.add( 'progressbar', [ 12, 12, myProgressBarWidth, 24 ], 0, myMaximumValue );
+	if ( useCancel ) {
+		myProgressPanel.cancel = myProgressPanel.add( 'button', undefined, 'キャンセル' );
+		myProgressPanel.cancel.onClick = function() {
+			try {
+				do_flag = false;
+				myProgressPanel.close();
+			} catch(e) {
+				alert(e);
+			}
+		}
+	}
+	var PP = {
+		'ProgressPanel': myProgressPanel,
+		'title': progresTitle,
+		'show': function() { this.ProgressPanel.show() },
+		'close': function() { this.ProgressPanel.close() },
+		'max': myMaximumValue,
+		'barwidth': myProgressBarWidth,
+		'val': function( val ) {
+			this.ProgressPanel.myProgressBar.value = val;
+			if ( val < this.max ) {
+				this.ProgressPanel.text = _.sprintf( "%s(%d/%d)", this.title, val+1, this.max );
+			}
+			this.ProgressPanel.update();
+		}
+	}
+	return PP;
 }
