@@ -14,6 +14,8 @@
 var originalRulerUnits = app.preferences.rulerUnits;
 // Photoshopの設定単位をピクセルに変更
 app.preferences.rulerUnits = Units.PIXELS;
+// Photoshopの不要なダイアログを表示させない
+app.displayDialogs = DialogModes.NO;
 
 // 初期設定
 var settings = {
@@ -31,8 +33,8 @@ var settings = {
 			max:  12
 		},
 	},
-	pageWidth: 224,   // 1ページの幅の初期値
-	offsetPage: 1,    // PDFページ番号のオフセット
+	pageWidth: 1240,   // 1ページの幅の初期値
+	offsetPage: 0,    // PDFページ番号のオフセット
 	save: {
 		init: 'JPG',    // 保存形式の初期値
 		type: {
@@ -249,7 +251,7 @@ if ( do_flag ) {
 	pdfOpenOptions.bitsPerChannel   = BitsPerChannelType.EIGHT;
 	pdfOpenOptions.resolution       = settings.pageWidth * 25.4 / getPageWidth();
 	pdfOpenOptions.suppressWarnings = true;
-	pdfOpenOptions.cropPage         = CropToType.BLEEDBOX;
+	pdfOpenOptions.cropPage         = CropToType.CROPBOX;
 	pdfOpenOptions.usePageNumber    = true;
 	var i = 1;
 
@@ -363,7 +365,7 @@ function getPageWidth() {
 	pdfOpenOptions.resolution       = 25.4;
 	pdfOpenOptions.usePageNumber    = true;
 	pdfOpenOptions.suppressWarnings = true;
-	pdfOpenOptions.cropPage         = CropToType.BLEEDBOX;
+	pdfOpenOptions.cropPage         = CropToType.CROPBOX;
 	pdfOpenOptions.page             = 1;
 	var page = app.open( settings.fileObj, pdfOpenOptions );
 	var pageWidth = page.width.value;
