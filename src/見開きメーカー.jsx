@@ -1,7 +1,7 @@
 /*===================================================================================================
   File Name: 見開きメーカー.jsx
   Title: 見開きメーカー
-  Version: 1.1.0
+  Version: 1.2.0
   Author: show555
   Description: 複数ページのPDFから指定したページの見開き画像を生成する
   Includes: Underscore.js,
@@ -23,7 +23,7 @@ var settings = {
 	colorMode: 'RGB', // カラーモードの初期値
 	_quality: {
 		jpgWeb: {
-			init: 90,     // 保存画質（Web用JPG）の初期値
+			init: 100,     // 保存画質（Web用JPG）の初期値
 			min:  0,
 			max:  100
 		},
@@ -33,10 +33,10 @@ var settings = {
 			max:  12
 		},
 	},
-	pageWidth: 1240,   // 1ページの幅の初期値
+	pageWidth: 4000,   // 1ページの幅の初期値
 	offsetPage: 0,    // PDFページ番号のオフセット
 	save: {
-		init: 'JPG',    // 保存形式の初期値
+		init: 'PNG',    // 保存形式の初期値
 		type: {
 			jpgWeb: { label: 'JPG（WEB用）', extension: 'jpg' },
 			jpgDtp: { label: 'JPG', extension: 'jpg' },
@@ -44,7 +44,7 @@ var settings = {
 			png:    { label: 'PNG', extension: 'png' }
 		},
 		dir: 'spread_images', // 保存先のディレクトリ名
-		fileName: 'spread_'   // 書き出すファイル名
+		fileName: ''   // 書き出すファイル名
 	},
 	fileTypes: [],
 	saveType: '',
@@ -104,8 +104,8 @@ uDlg.center();
 
 // パネル 対象PDFファイル
 uDlg.filePnl           = uDlg.add( "panel",    { x:10,  y:10, width:380, height:60 }, "対象PDFファイル" );
-uDlg.filePnl.path      = uDlg.add( "edittext", { x:25,  y:30, width:270, height:25 }, settings.filePath );
-uDlg.filePnl.selectBtn = uDlg.add( "button",   { x:300, y:30, width:75,  height:25 }, "選択" );
+uDlg.filePnl.path      = uDlg.filePnl.add( "edittext", { x:15,  y:10, width:270, height:25 }, settings.filePath );
+uDlg.filePnl.selectBtn = uDlg.filePnl.add( "button",   { x:290, y:10, width:75,  height:25 }, "選択" );
 // 対象フォルダ選択ボタンが押された時の処理
 uDlg.filePnl.selectBtn.onClick = function() {
 	var oldPath = uDlg.filePnl.path.text;
@@ -114,12 +114,12 @@ uDlg.filePnl.selectBtn.onClick = function() {
 
 // パネル ページ幅
 uDlg.pageWidthPnl                     = uDlg.add( "panel",      { x:10,  y:80,  width:380, height:60 }, "ページ幅" );
-uDlg.pageWidthPnl.pageWidthText       = uDlg.add( "statictext", { x:25,  y:105, width:80,  height:20 }, "1ページの幅:" );
-uDlg.pageWidthPnl.pageWidth           = uDlg.add( "edittext",   { x:115, y:105, width:50,  height:22 }, settings.pageWidth );
-uDlg.pageWidthPnl.pageWidthUnit       = uDlg.add( "statictext", { x:170, y:105, width:20,  height:20 }, "px" );
-uDlg.pageWidthPnl.spreadPageWidthText = uDlg.add( "statictext", { x:200, y:105, width:80,  height:20 }, "見開きの幅:" );
-uDlg.pageWidthPnl.spreadPageWidth     = uDlg.add( "statictext", { x:280, y:105, width:50,  height:20 }, settings.pageWidth*2 );
-uDlg.pageWidthPnl.spreadPageWidthUnit = uDlg.add( "statictext", { x:335, y:105, width:20,  height:20 }, "px" );
+uDlg.pageWidthPnl.pageWidthText       = uDlg.pageWidthPnl.add( "statictext", { x:15,  y:10, width:80,  height:20 }, "1ページの幅:" );
+uDlg.pageWidthPnl.pageWidth           = uDlg.pageWidthPnl.add( "edittext",   { x:105, y:10, width:50,  height:22 }, settings.pageWidth );
+uDlg.pageWidthPnl.pageWidthUnit       = uDlg.pageWidthPnl.add( "statictext", { x:160, y:10, width:20,  height:20 }, "px" );
+uDlg.pageWidthPnl.spreadPageWidthText = uDlg.pageWidthPnl.add( "statictext", { x:190, y:10, width:80,  height:20 }, "見開きの幅:" );
+uDlg.pageWidthPnl.spreadPageWidth     = uDlg.pageWidthPnl.add( "statictext", { x:270, y:10, width:50,  height:20 }, settings.pageWidth*2 );
+uDlg.pageWidthPnl.spreadPageWidthUnit = uDlg.pageWidthPnl.add( "statictext", { x:325, y:10, width:20,  height:20 }, "px" );
 uDlg.pageWidthPnl.pageWidthText.justify = uDlg.pageWidthPnl.spreadPageWidth.justify = uDlg.pageWidthPnl.spreadPageWidthText.justify = 'right';
 
 // 画質を入力した時の処理
@@ -130,22 +130,22 @@ uDlg.pageWidthPnl.pageWidth.onChange = function() {
 
 // パネル 見開きページ指定
 uDlg.spreadsPnl             = uDlg.add( "panel",      { x:10, y:150,  width:380, height:80 }, "ページ指定" );
-uDlg.spreadsPnl.spreadsText = uDlg.add( "statictext", { x:25, y:170, width:280,  height:20 }, "指定ページをカンマ区切りで入力してください" );
-uDlg.spreadsPnl.spreads     = uDlg.add( "edittext",   { x:25, y:195, width:350,  height:20 }, "001-002,003-004" );
+uDlg.spreadsPnl.spreadsText = uDlg.spreadsPnl.add( "statictext", { x:15, y:5, width:280,  height:20 }, "指定ページをカンマ区切りで入力してください" );
+uDlg.spreadsPnl.spreads     = uDlg.spreadsPnl.add( "edittext",   { x:15, y:30, width:350,  height:20 }, "001-002,003-004" );
 
 // パネル 書き出し設定
 var saveTypeList = _.pluck( settings.save.type, 'label' );
 uDlg.resizePnl               = uDlg.add( "panel",        { x:10,  y:240, width:380, height:120 }, "書き出し設定" );
-uDlg.resizePnl.colorModeText = uDlg.add( "statictext",   { x:25,  y:265, width:60,  height:20  }, "モード:" );
-uDlg.resizePnl.saveTypeText  = uDlg.add( "statictext",   { x:25,  y:295, width:60,  height:20  }, "保存形式:" );
-uDlg.resizePnl.saveType      = uDlg.add( "dropdownlist", { x:95,  y:293, width:110, height:22  }, saveTypeList );
-uDlg.resizePnl.qualityText   = uDlg.add( "statictext",   { x:25,  y:325, width:60,  height:20  }, "画質:" );
-uDlg.resizePnl.quality       = uDlg.add( "edittext",     { x:95,  y:323, width:50,  height:22  }, settings._quality.jpgDtp.init );
-uDlg.resizePnl.qualityRange  = uDlg.add( "statictext",   { x:150, y:325, width:60,  height:20  }, "(0〜" + settings._quality.jpgDtp.max + ")" );
-uDlg.resizePnl.qualitySlider = uDlg.add( "slider",       { x:205, y:320, width:170, height:20  }, settings._quality.jpgDtp.init, settings._quality.jpgDtp.min, settings._quality.jpgDtp.max );
+uDlg.resizePnl.colorModeText = uDlg.resizePnl.add( "statictext",   { x:15,  y:10, width:60,  height:20  }, "モード:" );
+uDlg.resizePnl.saveTypeText  = uDlg.resizePnl.add( "statictext",   { x:15,  y:40, width:60,  height:20  }, "保存形式:" );
+uDlg.resizePnl.saveType      = uDlg.resizePnl.add( "dropdownlist", { x:85,  y:38, width:110, height:22  }, saveTypeList );
+uDlg.resizePnl.qualityText   = uDlg.resizePnl.add( "statictext",   { x:15,  y:70, width:60,  height:20  }, "画質:" );
+uDlg.resizePnl.quality       = uDlg.resizePnl.add( "edittext",     { x:85,  y:68, width:50,  height:22  }, settings._quality.jpgDtp.init );
+uDlg.resizePnl.qualityRange  = uDlg.resizePnl.add( "statictext",   { x:140, y:70, width:60,  height:20  }, "(0〜" + settings._quality.jpgDtp.max + ")" );
+uDlg.resizePnl.qualitySlider = uDlg.resizePnl.add( "slider",       { x:195, y:65, width:170, height:20  }, settings._quality.jpgDtp.init, settings._quality.jpgDtp.min, settings._quality.jpgDtp.max );
 uDlg.resizePnl.colorModeText.justify = uDlg.resizePnl.saveTypeText.justify = uDlg.resizePnl.qualityText.justify = 'right';
 // カラーモード選択ラジオボタンの追加
-uDlg.resizePnl.colorMode      = uDlg.add( "group", { x:95, y:265, width:245, height:20 } );
+uDlg.resizePnl.colorMode      = uDlg.resizePnl.add( "group", { x:85, y:10, width:245, height:20 } );
 uDlg.resizePnl.colorMode.RGB  = uDlg.resizePnl.colorMode.add( "radiobutton",  { x:0,  y:0, width:50, height:20 }, "RGB" );
 uDlg.resizePnl.colorMode.CMYK = uDlg.resizePnl.colorMode.add( "radiobutton",  { x:55, y:0, width:70, height:20 }, "CMYK" );
 // カラーモードの初期値を設定
@@ -295,7 +295,11 @@ if ( do_flag ) {
 			saveDir.create();
 		}
 		// 保存用の新規オブジェクト作成
-		var newFile = new File( settings.fileObj.path + '/' + settings.save.dir + '/' + settings.save.fileName + _.pad( i, 3, '0' ) + '.' + settings.save.type[settings.saveType].extension );
+		var pages = _.map( spread, function( page ) {
+			return _.pad( page, 3, '0' );
+		} );
+		var fileName = pages.join('-');
+		var newFile = new File( settings.fileObj.path + '/' + settings.save.dir + '/' + fileName + '.' + settings.save.type[settings.saveType].extension );
 		// 保存形式ごとの関数を呼び出し
 		saveFunctions[settings.saveType]( theBaseDoc, newFile, settings );
 		// ファイルクローズ
